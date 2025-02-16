@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezerwacja Fryzjera</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Rezerwacja wizyty</h1>
+        <label for="fryzjer">Wybierz fryzjera:</label>
+        <select id="fryzjer">
+            <option value="Maciek">Maciek - Strzyżenie męskie, Broda (50 zł)</option>
+            <option value="Krzysiek">Krzysiek - Strzyżenie + Broda (80 zł)</option>
+            <option value="Rysiek">Rysiek - Strzyżenie dzieci (40 zł)</option>
+        </select>
+
+        <label for="godzina">Wybierz godzinę:</label>
+        <select id="godzina"></select>
+
+        <label for="dzien">Wybierz dzień:</label>
+        <input type="date" id="dzien" min="2025-02-18">
+
+        <button onclick="zarezerwuj()">Zarezerwuj</button>
+        <p id="status"></p>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
