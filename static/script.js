@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     const status = document.getElementById("status");
 
     try {
-        const response = await fetch("/terminy");
+        const response = await fetch("https://fryzjer-rezerwacje.onrender.com/terminy");
         const data = await response.json();
 
         // Dodaj fryzjerów do wyboru
@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             selectFryzjer.appendChild(option);
         }
 
-        // Domyślne załadowanie usług dla pierwszego fryzjera
+        // Załaduj domyślne usługi dla pierwszego fryzjera
         updateUslugi(selectFryzjer.value, data.fryzjerzy);
 
         // Zmiana usług w zależności od wybranego fryzjera
@@ -25,7 +25,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             updateUslugi(selectFryzjer.value, data.fryzjerzy);
         });
 
-        // Dodaj godziny do wyboru
+        // Dodaj godziny do wyboru (reset przed dodaniem)
+        selectGodzina.innerHTML = "";
         data.godziny.forEach(godzina => {
             let option = document.createElement("option");
             option.value = godzina;
@@ -35,16 +36,20 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     } catch (error) {
         console.error("Błąd pobierania terminów:", error);
+        status.textContent = "Nie można załadować terminów!";
+        status.style.color = "red";
     }
 
     function updateUslugi(fryzjer, fryzjerzy) {
         selectUsluga.innerHTML = "";
-        fryzjerzy[fryzjer].forEach(usluga => {
-            let option = document.createElement("option");
-            option.value = usluga;
-            option.textContent = usluga;
-            selectUsluga.appendChild(option);
-        });
+        if (fryzjerzy[fryzjer]) {
+            fryzjerzy[fryzjer].forEach(usluga => {
+                let option = document.createElement("option");
+                option.value = usluga;
+                option.textContent = usluga;
+                selectUsluga.appendChild(option);
+            });
+        }
     }
 });
 
@@ -60,7 +65,7 @@ function zarezerwuj() {
         return;
     }
 
-    fetch("/rezerwuj", {
+    fetch("https://fryzjer-rezerwacje.onrender.com/rezerwuj", {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
