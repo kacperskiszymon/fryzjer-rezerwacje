@@ -1,85 +1,69 @@
-document.addEventListener("DOMContentLoaded", async function () {
-    const selectFryzjer = document.getElementById("fryzjer");
-    const selectGodzina = document.getElementById("godzina");
-    const selectUsluga = document.getElementById("usluga");
-    const selectDzien = document.getElementById("dzien");
-    const status = document.getElementById("status");
+document.addEventListener("DOMContentLoaded", function () {
+    const fryzjerSelect = document.getElementById("fryzjer");
+    const godzinaSelect = document.getElementById("godzina");
+    const dzienInput = document.getElementById("dzien");
+    const emailInput = document.getElementById("email");
+    const statusMessage = document.getElementById("status");
 
-    try {
-        const response = await fetch("https://fryzjer-rezerwacje.onrender.com/terminy");
-        const data = await response.json();
+    // Pobierz terminy z API
+    fetch("/terminy")
+        .then(response => response.json())
+        .then(data => {
+            if (!data.fryzjerzy || !data.godziny) {
+                throw new Error("Błąd w danych z API");
+            }
 
-        // Dodaj fryzjerów do wyboru
-        for (const fryzjer in data.fryzjerzy) {
-            let option = document.createElement("option");
-            option.value = fryzjer;
-            option.textContent = fryzjer;
-            selectFryzjer.appendChild(option);
-        }
-
-        // Załaduj domyślne usługi dla pierwszego fryzjera
-        updateUslugi(selectFryzjer.value, data.fryzjerzy);
-
-        // Zmiana usług w zależności od wybranego fryzjera
-        selectFryzjer.addEventListener("change", function () {
-            updateUslugi(selectFryzjer.value, data.fryzjerzy);
-        });
-
-        // Dodaj godziny do wyboru (reset przed dodaniem)
-        selectGodzina.innerHTML = "";
-        data.godziny.forEach(godzina => {
-            let option = document.createElement("option");
-            option.value = godzina;
-            option.textContent = godzina;
-            selectGodzina.appendChild(option);
-        });
-
-    } catch (error) {
-        console.error("Błąd pobierania terminów:", error);
-        status.textContent = "Nie można załadować terminów!";
-        status.style.color = "red";
-    }
-
-    function updateUslugi(fryzjer, fryzjerzy) {
-        selectUsluga.innerHTML = "";
-        if (fryzjerzy[fryzjer]) {
-            fryzjerzy[fryzjer].forEach(usluga => {
+            // Załaduj fryzjerów do listy
+            Object.entries(data.fryzjerzy).forEach(([name, services]) => {
                 let option = document.createElement("option");
-                option.value = usluga;
-                option.textContent = usluga;
-                selectUsluga.appendChild(option);
+                option.value = name;
+                option.textContent = `${name} - ${services.join(", ")}`;
+                fryzjerSelect.appendChild(option);
             });
-        }
-    }
+
+            // Obsługa wyboru fryzjera
+            fryzjerSelect.addEventListener("change", function () {
+                godzinaSelect.innerHTML = '<option value="">Wybierz godzinę</option>';
+                data.godziny.forEach(godzina => {
+                    let option = document.createElement("option");
+                    option.value = godzina;
+                    option.textContent = godzina;
+                    godzinaSelect.appendChild(option);
+                });
+            });
+        })
+        .catch(error => {
+            console.error("Błąd:", error);
+            statusMessage.textContent = "Nie można załadować terminów!";
+        });
 });
 
+// Funkcja rezerwacji
 function zarezerwuj() {
-    let fryzjer = document.getElementById("fryzjer").value;
-    let usluga = document.getElementById("usluga").value;
-    let godzina = document.getElementById("godzina").value;
-    let dzien = document.getElementById("dzien").value;
-    let status = document.getElementById("status");
+    const fryzjer = document.getElementById("fryzjer").value;
+    const godzina = document.getElementById("godzina").value;
+    const dzien = document.getElementById("dzien").value;
+    const email = document.getElementById("email").value;
+    const statusMessage = document.getElementById("status");
 
-    if (!dzien) {
-        alert("Wybierz datę!");
+    if (!fryzjer || !godzina || !dzien || !email) {
+        statusMessage.textContent = "Wypełnij wszystkie pola!";
         return;
     }
 
-    fetch("https://fryzjer-rezerwacje.onrender.com/rezerwuj", {
+    fetch("/rezerwuj", {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ fryzjer, usluga, godzina, dzien })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fryzjer, godzina, dzien, email })
     })
-    .then(response => response.json())
-    .then(data => {
-        status.textContent = data.message;
-        status.style.color = "green";
-    })
-    .catch(error => {
-        console.error("Błąd rezerwacji:", error);
-        status.textContent = "Błąd rezerwacji!";
-        status.style.color = "red";
-    });
+        .then(response => response.json())
+        .then(data => {
+            statusMessage.style.color = "green";
+            statusMessage.textContent = data.message;
+        })
+        .catch(error => {
+            console.error("Błąd:", error);
+            statusMessage.style.color = "red";
+            statusMessage.textContent = "Wystąpił błąd podczas rezerwacji.";
+        });
 }
