@@ -2,12 +2,13 @@ from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 import sqlite3
 from flask_mail import Mail, Message
-import os  # 🔒 Używamy zmiennych środowiskowych do przechowywania haseł!
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
 
-# 🔒 Konfiguracja Flask-Mail (BEZPIECZNE HASŁO)
+# Konfiguracja Flask-Mail
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -17,7 +18,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
 mail = Mail(app)
 
-# 📌 Inicjalizacja bazy danych
+# Inicjalizacja bazy danych
 def init_db():
     with sqlite3.connect("rezerwacje.db") as conn:
         c = conn.cursor()
@@ -33,17 +34,18 @@ def init_db():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    min_date = datetime.today().strftime('%Y-%m-%d')
+    return render_template('index.html', min_date=min_date)
 
 @app.route('/terminy', methods=['GET'])
 def get_terminy():
+    # Dane dotyczące fryzjerów: przypisane usługi oraz cena
     terminy = {
         "Maciek": {"uslugi": ["Strzyżenie męskie", "Broda"], "cena": "50 zł"},
         "Krzysiek": {"uslugi": ["Strzyżenie + Broda"], "cena": "80 zł"},
         "Rysiek": {"uslugi": ["Strzyżenie dzieci"], "cena": "40 zł"}
     }
     godziny = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00"]
-    
     return jsonify({"fryzjerzy": terminy, "godziny": godziny})
 
 @app.route('/rezerwuj', methods=['POST'])
@@ -60,29 +62,27 @@ def rezerwuj():
 
     with sqlite3.connect("rezerwacje.db") as conn:
         c = conn.cursor()
-        
-        # ✅ Sprawdź, czy termin nie jest już zajęty!
+        # Sprawdzenie, czy termin nie jest już zajęty
         c.execute("SELECT * FROM rezerwacje WHERE fryzjer=? AND godzina=? AND dzien=?", (fryzjer, godzina, dzien))
         if c.fetchone():
             return jsonify({"message": "Ten termin jest już zajęty!"}), 400
 
-        # ✅ Zapisz rezerwację
+        # Zapis rezerwacji
         c.execute("INSERT INTO rezerwacje (fryzjer, usluga, godzina, dzien, email) VALUES (?, ?, ?, ?, ?)",
                   (fryzjer, usluga, godzina, dzien, email))
         conn.commit()
 
-    # 📩 Wysyłanie e-maila z potwierdzeniem
+    # Wysyłanie e-maila z potwierdzeniem rezerwacji
     try:
         msg = Message("Potwierdzenie rezerwacji", recipients=[email])
         msg.body = f"""Twoja rezerwacja została zapisana!
-        
-        ✂ Fryzjer: {fryzjer}
-        💇‍♂️ Usługa: {usluga}
-        🕒 Godzina: {godzina}
-        📅 Data: {dzien}
 
-        Do zobaczenia!
-        """
+✂ Fryzjer: {fryzjer}
+💇‍♂️ Usługa: {usluga}
+🕒 Godzina: {godzina}
+📅 Data: {dzien}
+
+Do zobaczenia!"""
         mail.send(msg)
     except Exception as e:
         print("Błąd podczas wysyłania e-maila:", str(e))
