@@ -38,9 +38,9 @@ def index():
 @app.route('/terminy', methods=['GET'])
 def get_terminy():
     terminy = {
-        "Maciek": ["Strzyżenie męskie", "Broda"],
-        "Krzysiek": ["Strzyżenie + Broda"],
-        "Rysiek": ["Strzyżenie dzieci"]
+        "Maciek": {"uslugi": ["Strzyżenie męskie", "Broda"], "cena": "50 zł"},
+        "Krzysiek": {"uslugi": ["Strzyżenie + Broda"], "cena": "80 zł"},
+        "Rysiek": {"uslugi": ["Strzyżenie dzieci"], "cena": "40 zł"}
     }
     godziny = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00"]
     
@@ -49,14 +49,14 @@ def get_terminy():
 @app.route('/rezerwuj', methods=['POST'])
 def rezerwuj():
     data = request.json
-    fryzjer = data['fryzjer']
-    usluga = data['usluga']
-    godzina = data['godzina']
-    dzien = data['dzien']
-    email = data.get('email')  # Pobieramy e-mail klienta
+    fryzjer = data.get('fryzjer')
+    usluga = data.get('usluga')
+    godzina = data.get('godzina')
+    dzien = data.get('dzien')
+    email = data.get('email')
 
-    if not email:
-        return jsonify({"message": "Błąd! Brak e-maila klienta"}), 400
+    if not fryzjer or not usluga or not godzina or not dzien or not email:
+        return jsonify({"message": "Wypełnij wszystkie pola!"}), 400
 
     with sqlite3.connect("rezerwacje.db") as conn:
         c = conn.cursor()
