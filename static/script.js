@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
             Object.entries(data.fryzjerzy).forEach(([name, info]) => {
                 let option = document.createElement("option");
                 option.value = name;
-                option.textContent = `${name} - ${info.cena}`;
+                option.textContent = name;
                 fryzjerSelect.appendChild(option);
             });
 

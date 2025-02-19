@@ -12,8 +12,8 @@ CORS(app)
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')  # Pobiera e-mail z ENV
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  # Pobiera hasło z ENV
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')  
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')  
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_USERNAME')
 
 mail = Mail(app)
@@ -24,11 +24,11 @@ def init_db():
         c = conn.cursor()
         c.execute('''CREATE TABLE IF NOT EXISTS rezerwacje (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        fryzjer TEXT,
-                        usluga TEXT,
-                        godzina TEXT,
-                        dzien TEXT,
-                        email TEXT
+                        fryzjer TEXT NOT NULL,
+                        usluga TEXT NOT NULL,
+                        godzina TEXT NOT NULL,
+                        dzien TEXT NOT NULL,
+                        email TEXT NOT NULL
                     )''')
         conn.commit()
 
@@ -39,14 +39,15 @@ def index():
 
 @app.route('/terminy', methods=['GET'])
 def get_terminy():
-    # Dane dotyczące fryzjerów: przypisane usługi oraz cena
-    terminy = {
-        "Maciek": {"uslugi": ["Strzyżenie męskie", "Broda"], "cena": "50 zł"},
-        "Krzysiek": {"uslugi": ["Strzyżenie + Broda"], "cena": "80 zł"},
-        "Rysiek": {"uslugi": ["Strzyżenie dzieci"], "cena": "40 zł"}
+    fryzjerzy = {
+        "Krzysiek": {"uslugi": ["Strzyżenie włosów", "Broda"], "ceny": {"Strzyżenie włosów": 50, "Broda": 50, "Włosy + Broda": 85}},
+        "Maciek": {"uslugi": ["Strzyżenie włosów"], "ceny": {"Strzyżenie włosów": 50}},
+        "Rysiek": {"uslugi": ["Strzyżenie dzieci"], "ceny": {"Strzyżenie dzieci": 45}}
     }
+
     godziny = ["11:00", "12:00", "13:00", "14:00", "15:00", "16:00"]
-    return jsonify({"fryzjerzy": terminy, "godziny": godziny})
+
+    return jsonify({"fryzjerzy": fryzjerzy, "godziny": godziny})
 
 @app.route('/rezerwuj', methods=['POST'])
 def rezerwuj():
@@ -62,20 +63,18 @@ def rezerwuj():
 
     with sqlite3.connect("rezerwacje.db") as conn:
         c = conn.cursor()
-        # Sprawdzenie, czy termin nie jest już zajęty
         c.execute("SELECT * FROM rezerwacje WHERE fryzjer=? AND godzina=? AND dzien=?", (fryzjer, godzina, dzien))
         if c.fetchone():
             return jsonify({"message": "Ten termin jest już zajęty!"}), 400
 
-        # Zapis rezerwacji
         c.execute("INSERT INTO rezerwacje (fryzjer, usluga, godzina, dzien, email) VALUES (?, ?, ?, ?, ?)",
                   (fryzjer, usluga, godzina, dzien, email))
         conn.commit()
 
-    # Wysyłanie e-maila z potwierdzeniem rezerwacji
+    # Wysyłanie e-maila do klienta
     try:
-        msg = Message("Potwierdzenie rezerwacji", recipients=[email])
-        msg.body = f"""Twoja rezerwacja została zapisana!
+        msg_klient = Message("Potwierdzenie rezerwacji", recipients=[email])
+        msg_klient.body = f"""Twoja rezerwacja została zapisana!
 
 ✂ Fryzjer: {fryzjer}
 💇‍♂️ Usługa: {usluga}
@@ -83,9 +82,25 @@ def rezerwuj():
 📅 Data: {dzien}
 
 Do zobaczenia!"""
-        mail.send(msg)
+        mail.send(msg_klient)
     except Exception as e:
-        print("Błąd podczas wysyłania e-maila:", str(e))
+        print("Błąd podczas wysyłania e-maila do klienta:", str(e))
+
+    # Wysyłanie e-maila do właściciela salonu
+    try:
+        msg_wlasciciel = Message("Nowa rezerwacja", recipients=["kacperskiszymon@gmail.com"])
+        msg_wlasciciel.body = f"""Nowa rezerwacja w salonie fryzjerskim!
+
+✂ Fryzjer: {fryzjer}
+💇‍♂️ Usługa: {usluga}
+🕒 Godzina: {godzina}
+📅 Data: {dzien}
+📩 Klient: {email}
+
+Sprawdź kalendarz!"""
+        mail.send(msg_wlasciciel)
+    except Exception as e:
+        print("Błąd podczas wysyłania e-maila do właściciela:", str(e))
 
     return jsonify({"message": "Rezerwacja zapisana! Powiadomienie e-mail wysłane."})
 
