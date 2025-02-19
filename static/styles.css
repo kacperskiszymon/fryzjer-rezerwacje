@@ -1,53 +1,90 @@
+/* Ogólne ustawienia */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', sans-serif;
+    background: linear-gradient(135deg, #1c1c1c, #444, #b0b0b0);
+    color: #fff;
     text-align: center;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
+/* Kontener rezerwacji */
 .container {
-    background: white;
-    width: 50%;
-    margin: 50px auto;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    background: rgba(20, 20, 20, 0.95);
+    width: 420px;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    text-align: center;
 }
 
+/* Logo */
+.container img {
+    width: 80%;
+    max-width: 200px;
+    margin-bottom: 20px;
+}
+
+/* Tytuł */
 h1 {
-    color: #333;
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #ddd;
 }
 
+/* Pola formularza */
 label {
     font-weight: bold;
     display: block;
-    margin-top: 10px;
+    margin-top: 15px;
+    color: #bbb;
 }
 
 select, input {
     width: 100%;
-    padding: 8px;
+    padding: 10px;
     margin-top: 5px;
     border-radius: 5px;
-    border: 1px solid #ccc;
+    border: none;
+    background: #333;
+    color: #fff;
+    font-size: 14px;
+    box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.1);
+    transition: background 0.3s ease;
 }
 
+select:hover, input:hover {
+    background: #444;
+}
+
+/* Przycisk rezerwacji */
 button {
     margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #28a745;
-    color: white;
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #ffcc00, #ff6600);
+    color: black;
     border: none;
     cursor: pointer;
     border-radius: 5px;
     font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.3s ease;
 }
 
 button:hover {
-    background-color: #218838;
+    background: linear-gradient(135deg, #ff9900, #ff3300);
 }
 
+/* Status wiadomości */
 #status {
     margin-top: 15px;
     font-weight: bold;
